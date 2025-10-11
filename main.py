@@ -1,14 +1,18 @@
 import cv2
 import numpy as np
 import time
+import torch
 from ultralytics import YOLO
 import sys
 
+torch.cuda.empty_cache()
 yolomodel = 'yolov8n.pt' 
 
 class AreaDetector:
     def __init__(self, model_path=yolomodel, area_coords=None):
         self.model = YOLO(model_path)
+        self.model.to('cuda')
+        print(f'gpu :', {torch.cuda.get_device_name(0)})
         self.area_coords = area_coords
         self.last_detection_time = 0
         self.detection_cooldown = 1
@@ -48,7 +52,7 @@ class AreaDetector:
     def process_frame(self, frame):
         """Process a single frame for object detection"""
         try:
-            results = self.model(frame, verbose=False)
+            results = self.model(frame, verbose=False, device='cuda')
             object_detected_in_area = False
         
             for result in results:
@@ -213,12 +217,12 @@ class AreaDetector:
             ], dtype=np.int32)
             # print(f"Default detection area set on right side: {w}x{h} frame")
         
-        print("Starting real-time detection...")
-        print("Controls:")
-        print("- Press 'q' or ESC to quit")
-        print("- Press 'r' to reset detection area (click 4 points)")
-        print("- Press 's' to save current frame")
-        print("- Close window with X button to exit")
+        # print("Starting real-time detection...")
+        # print("Controls:")
+        # print("- Press 'q' or ESC to quit")
+        # print("- Press 'r' to reset detection area (click 4 points)")
+        # print("- Press 's' to save current frame")
+        # print("- Close window with X button to exit")
         
         # Area selection variables
         drawing_area = False
@@ -288,22 +292,8 @@ class AreaDetector:
                 # Handle key presses with better responsiveness
                 key = cv2.waitKey(1) & 0xFF
                 
-                # Check multiple times for better key detection
-                if key == ord('q') or key == 27:  # 'q' or ESC key
-                    print("Quit key pressed - exiting")
-                    break
-                elif key == ord('r') or key == ord('R'):
-                    drawing_area = True
-                    temp_points = []
-                    print("Reset key pressed - click 4 points to define new detection area...")
-                elif key == ord('s') or key == ord('S'):
-                    filename = f"frame_{int(time.time())}.jpg"
-                    cv2.imwrite(filename, frame)
-                    print(f"Save key pressed - frame saved as {filename}")
-                
-                # Additional check for window close button
                 if cv2.getWindowProperty(window_name, cv2.WND_PROP_VISIBLE) < 1:
-                    print("Window closed - exiting...")
+                    print("Window closed")
                     break
                 
         except KeyboardInterrupt:
