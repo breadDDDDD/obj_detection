@@ -11,8 +11,14 @@ yolomodel = 'yolov8n.pt'
 class AreaDetector:
     def __init__(self, model_path=yolomodel, area_coords=None):
         self.model = YOLO(model_path)
-        self.model.to('cuda')
-        print(f'gpu :', {torch.cuda.get_device_name(0)})
+        # self.model.to('cuda')
+        # print(f'gpu :', {torch.cuda.get_device_name(0)})
+        if torch.cuda.is_available():
+            self.device = 'cuda'
+            print(f"gpu: {torch.cuda.get_device_name(0)}")
+        else:
+            self.device = 'cpu'
+            print("cpu")
         self.area_coords = area_coords
         self.last_detection_time = 0
         self.detection_cooldown = 1
@@ -150,8 +156,6 @@ class AreaDetector:
     
     def test_camera(self):
         """Test camera access"""
-        print("Testing camera access...")
-        
         # Try different camera indices
         for i in range(5):
             try:
@@ -215,16 +219,7 @@ class AreaDetector:
                 [start_x + area_width, start_y + area_height],
                 [start_x, start_y + area_height]
             ], dtype=np.int32)
-            # print(f"Default detection area set on right side: {w}x{h} frame")
-        
-        # print("Starting real-time detection...")
-        # print("Controls:")
-        # print("- Press 'q' or ESC to quit")
-        # print("- Press 'r' to reset detection area (click 4 points)")
-        # print("- Press 's' to save current frame")
-        # print("- Close window with X button to exit")
-        
-        # Area selection variables
+    
         drawing_area = False
         temp_points = []
         
@@ -253,7 +248,7 @@ class AreaDetector:
             while True:
                 ret, frame = cap.read()
                 if not ret or frame is None:
-                    print("Warning: Could not read frame, retrying...")
+                    print("Warning: Could not read frame")
                     time.sleep(0.1)
                     continue
                 
