@@ -11,8 +11,6 @@ yolomodel = 'yolov8n.pt'
 class AreaDetector:
     def __init__(self, model_path=yolomodel, area_coords=None):
         self.model = YOLO(model_path)
-        # self.model.to('cuda')
-        # print(f'gpu :', {torch.cuda.get_device_name(0)})
         if torch.cuda.is_available():
             self.device = 'cuda'
             print(f"gpu: {torch.cuda.get_device_name(0)}")
